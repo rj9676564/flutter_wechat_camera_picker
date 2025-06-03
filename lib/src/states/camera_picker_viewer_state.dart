@@ -8,8 +8,8 @@ import 'dart:io';
 import 'package:better_player_plus/better_player_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:flutter_video_info/flutter_video_info.dart';
 import 'package:path/path.dart' as path;
-import 'package:video_player/video_player.dart';
 import 'package:wechat_picker_library/wechat_picker_library.dart';
 
 import '../constants/config.dart';
@@ -80,18 +80,40 @@ class CameraPickerViewerState extends State<CameraPickerViewer> {
       );
 
       // 使用 VideoPlayerController 获取宽高比
-      final videoController =
-          VideoPlayerController.file(File(previewFile.path));
-      await videoController.initialize();
-      double aspectRatio = videoController.value.aspectRatio;
-      // 检查旋转角度
-      final orientation = videoController.value.rotationCorrection; // 如果可用
-      if (orientation == 90 || orientation == 270) {
-        aspectRatio = 1 / aspectRatio;
-      }
-      debugPrint('Error when initializing video controller:2222 $aspectRatio');
+      final videoInfo = FlutterVideoInfo();
+      late double aspectRatio;
+      try {
+        // 获取视频元数据
+        final info = await videoInfo.getVideoInfo(previewFile.path);
 
-      videoController.dispose(); // 释放临时控制器
+        if (info == null) {
+          debugPrint('无法获取视频信息');
+          return;
+        }
+
+        // 获取原始宽高
+        final width = info.width ?? 16;
+        final height = info.height ?? 9;
+
+        // 获取旋转角度（0, 90, 180, 270）
+        final orientation = info.orientation;
+
+        // 计算宽高比（考虑旋转）
+
+        if (orientation == 90 || orientation == 270) {
+          // 旋转90/270度时，宽高需要交换
+          aspectRatio = height / width;
+        } else {
+          aspectRatio = width / height;
+        }
+
+        debugPrint(
+            '视频信息: 宽=$width, 高=$height, 旋转=$orientation°, 宽高比=$aspectRatio');
+      } catch (e) {
+        debugPrint('获取视频信息出错: $e');
+      }
+
+      // videoController.dispose(); // 释放临时控制器
       final betterPlayerConfiguration = BetterPlayerConfiguration(
         autoPlay: pickerConfig.shouldAutoPreviewVideo,
         looping: pickerConfig.shouldAutoPreviewVideo,
