@@ -1513,7 +1513,7 @@ class CameraPickerState extends State<CameraPicker>
                       child: CameraProgressButton(
                         isAnimating:
                             showProgressIndicator && isShootingButtonAnimate,
-                        duration: pickerConfig.maximumRecordingDuration!,
+                        duration: pickerConfig.maximumRecordingDuration,
                         size: size,
                         // ignore: deprecated_member_use
                         ringsColor: Theme.of(context).indicatorColor,
